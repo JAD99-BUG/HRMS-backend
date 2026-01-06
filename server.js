@@ -18,6 +18,14 @@ const dashboardRoutes = require('./routes/dashboard');
 const reportsRoutes = require('./routes/reports');
 const positionsRoutes = require('./routes/positions');
 
+app.get('/', (req, res) => {
+  res.send('HRMS Backend API is running. Access endpoints at /api');
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'UP', timestamp: new Date() });
+});
+
 app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
