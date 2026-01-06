@@ -2,29 +2,29 @@ const pool = require('../db/connection');
 
 const getAttendanceReport = async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
+    const result = await pool.query(`
       SELECT 
         ar.employee_id,
         CONCAT(e.first_name, ' ', e.last_name) as name,
         ar.attendance_date as date,
         ar.mark as status,
-        TIMESTAMPDIFF(HOUR, ar.check_in, ar.check_out) as hours,
-        YEAR(ar.attendance_date) as year,
-        MONTH(ar.attendance_date) as month,
-        DAY(ar.attendance_date) as day
+        EXTRACT(EPOCH FROM (ar.check_out - ar.check_in))/3600 as hours,
+        EXTRACT(YEAR FROM ar.attendance_date) as year,
+        EXTRACT(MONTH FROM ar.attendance_date) as month,
+        EXTRACT(DAY FROM ar.attendance_date) as day
       FROM attendance_record ar
       INNER JOIN employee e ON ar.employee_id = e.employee_id
       ORDER BY ar.attendance_date DESC, e.last_name, e.first_name
     `);
-    
+
     // Get total number of active employees
-    const [totalEmployees] = await pool.execute(
+    const totalEmployeesResult = await pool.query(
       "SELECT COUNT(*) as count FROM employee WHERE status = 'ACTIVE'"
     );
-    
+
     res.json({
-      attendanceData: rows,
-      totalEmployees: totalEmployees[0].count || 0
+      attendanceData: result.rows,
+      totalEmployees: totalEmployeesResult.rows[0].count || 0
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -33,7 +33,7 @@ const getAttendanceReport = async (req, res) => {
 
 const getPayrollReport = async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
+    const result = await pool.query(`
       SELECT 
         CONCAT(e.first_name, ' ', e.last_name) as name,
         pr.pay_date as payment_date,
@@ -46,7 +46,7 @@ const getPayrollReport = async (req, res) => {
       ORDER BY pr.pay_date DESC, e.last_name, e.first_name
       LIMIT 100
     `);
-    res.json(rows);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -54,7 +54,7 @@ const getPayrollReport = async (req, res) => {
 
 const getDepartmentReport = async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
+    const result = await pool.query(`
       SELECT 
         d.name,
         COUNT(DISTINCT e.employee_id) as staff_count,
@@ -65,7 +65,7 @@ const getDepartmentReport = async (req, res) => {
       GROUP BY d.department_id, d.name, d.budget
       ORDER BY d.name
     `);
-    res.json(rows);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -76,8 +76,3 @@ module.exports = {
   getPayrollReport,
   getDepartmentReport
 };
-
-
-
-
-

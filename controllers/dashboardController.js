@@ -2,40 +2,42 @@ const pool = require('../db/connection');
 
 const getDashboardStats = async (req, res) => {
   try {
-    const [activeEmployees] = await pool.execute(
+    const activeEmployeesResult = await pool.query(
       "SELECT COUNT(*) as count FROM employee WHERE status = 'ACTIVE'"
     );
-    const [totalDepts] = await pool.execute('SELECT COUNT(*) as count FROM department');
-    const [activeLeave] = await pool.execute(
+    const totalDeptsResult = await pool.query('SELECT COUNT(*) as count FROM department');
+    const activeLeaveResult = await pool.query(
       "SELECT COUNT(*) as count FROM leave_request WHERE status = 'PENDING'"
     );
-    const [payrollData] = await pool.execute(`
+    const payrollDataResult = await pool.query(`
       SELECT SUM(pe.net_salary) as total
       FROM payroll_entry pe
       INNER JOIN payroll_run pr ON pe.payroll_run_id = pr.payroll_run_id
-      WHERE pr.status = 'APPROVED' AND MONTH(pr.period_start) = MONTH(CURDATE()) AND YEAR(pr.period_start) = YEAR(CURDATE())
+      WHERE pr.status = 'APPROVED' 
+        AND EXTRACT(MONTH FROM pr.period_start) = EXTRACT(MONTH FROM CURRENT_DATE) 
+        AND EXTRACT(YEAR FROM pr.period_start) = EXTRACT(YEAR FROM CURRENT_DATE)
     `);
 
     // Get payroll totals for the last 6 months
-    const [payrollTrends] = await pool.execute(`
+    const payrollTrendsResult = await pool.query(`
       SELECT 
-        YEAR(pr.period_start) as year,
-        MONTH(pr.period_start) as month,
+        EXTRACT(YEAR FROM pr.period_start) as year,
+        EXTRACT(MONTH FROM pr.period_start) as month,
         SUM(pe.net_salary) as total
       FROM payroll_entry pe
       INNER JOIN payroll_run pr ON pe.payroll_run_id = pr.payroll_run_id
       WHERE pr.status = 'APPROVED' 
-        AND pr.period_start >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-      GROUP BY YEAR(pr.period_start), MONTH(pr.period_start)
-      ORDER BY YEAR(pr.period_start) ASC, MONTH(pr.period_start) ASC
+        AND pr.period_start >= CURRENT_DATE - INTERVAL '6 months'
+      GROUP BY EXTRACT(YEAR FROM pr.period_start), EXTRACT(MONTH FROM pr.period_start)
+      ORDER BY year ASC, month ASC
     `);
 
     res.json({
-      activeEmployees: activeEmployees[0].count,
-      totalDepts: totalDepts[0].count,
-      activeLeaveCount: activeLeave[0].count,
-      totalPayroll: payrollData[0].total || 0,
-      payrollTrends: payrollTrends || []
+      activeEmployees: activeEmployeesResult.rows[0].count,
+      totalDepts: totalDeptsResult.rows[0].count,
+      activeLeaveCount: activeLeaveResult.rows[0].count,
+      totalPayroll: payrollDataResult.rows[0].total || 0,
+      payrollTrends: payrollTrendsResult.rows || []
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -44,7 +46,7 @@ const getDashboardStats = async (req, res) => {
 
 const getDepartmentStats = async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
+    const result = await pool.query(`
       SELECT d.name, COUNT(DISTINCT e.employee_id) as staff
       FROM department d
       LEFT JOIN employment_assignment ea ON d.department_id = ea.department_id AND ea.status = 'ACTIVE'
@@ -52,7 +54,7 @@ const getDepartmentStats = async (req, res) => {
       GROUP BY d.department_id, d.name
       ORDER BY d.name
     `);
-    res.json(rows);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -62,8 +64,3 @@ module.exports = {
   getDashboardStats,
   getDepartmentStats
 };
-
-
-
-
-

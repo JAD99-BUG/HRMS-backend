@@ -5,19 +5,20 @@ const login = async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
 
-    const [rows] = await pool.execute(
+    const result = await pool.query(
       `SELECT ua.*, 
-        GROUP_CONCAT(r.name) as roles,
+        STRING_AGG(r.name, ',') as roles,
         ea.department_id
       FROM user_account ua
       LEFT JOIN user_role ur ON ua.user_id = ur.user_id AND ur.revoked_on IS NULL
       LEFT JOIN role r ON ur.role_id = r.role_id
       LEFT JOIN employee e ON ua.employee_id = e.employee_id
       LEFT JOIN employment_assignment ea ON e.employee_id = ea.employee_id AND ea.status = 'ACTIVE'
-      WHERE (ua.username = ? OR ua.email = ?) AND ua.status = 'ACTIVE'
-      GROUP BY ua.user_id`,
+      WHERE (ua.username = $1 OR ua.email = $2) AND ua.status = 'ACTIVE'
+      GROUP BY ua.user_id, ea.department_id`,
       [usernameOrEmail, usernameOrEmail]
     );
+    const rows = result.rows;
 
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -32,8 +33,8 @@ const login = async (req, res) => {
       }
     }
 
-    await pool.execute(
-      'UPDATE user_account SET last_login = NOW() WHERE user_id = ?',
+    await pool.query(
+      'UPDATE user_account SET last_login = NOW() WHERE user_id = $1',
       [user.user_id]
     );
 
