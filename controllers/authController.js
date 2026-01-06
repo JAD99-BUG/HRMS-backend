@@ -56,6 +56,7 @@ const login = async (req, res) => {
       department_id: user.department_id
     });
   } catch (error) {
+    console.error('Login Error:', error);
     res.status(500).json({ error: error.message });
   }
 };

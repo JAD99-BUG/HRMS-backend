@@ -1,14 +1,7 @@
-const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const pool = require('./db/connection');
 
-const pool = new Pool({
-    host: 'metro.proxy.rlwy.net',
-    user: 'postgres',
-    password: 'XPiLcdTZqGbYgjhbRpINjmFHJQiqXQNt',
-    database: 'railway',
-    port: 31003,
-});
 
 async function runMigration() {
     const client = await pool.connect();
