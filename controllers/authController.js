@@ -6,8 +6,13 @@ const login = async (req, res) => {
     const { usernameOrEmail, password } = req.body;
 
     const result = await pool.query(
-      `SELECT ua.*, 
-        STRING_AGG(r.name, ',') as roles,
+      `SELECT 
+        ua.user_id, 
+        ua.username, 
+        ua.email, 
+        ua.password_hash, 
+        ua.status,
+        STRING_AGG(DISTINCT r.name, ',') as roles,
         ea.department_id
       FROM user_account ua
       LEFT JOIN user_role ur ON ua.user_id = ur.user_id AND ur.revoked_on IS NULL
