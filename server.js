@@ -1,9 +1,12 @@
+console.log('🚀 HRMS Backend LOADED at', new Date().toISOString());
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const VERSION = '1.0.2';
+const VERSION = '1.0.3';
+
+
 
 app.use(cors());
 app.use(express.json());

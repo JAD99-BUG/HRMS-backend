@@ -1,6 +1,6 @@
 {
   "name": "hrms-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "HRMS Backend Server",
   "main": "server.js",
   "scripts": {
