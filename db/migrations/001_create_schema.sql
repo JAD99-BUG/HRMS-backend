@@ -262,7 +262,7 @@ INSERT INTO employee (first_name, last_name, email, hire_date, status)
 VALUES ('System', 'Administrator', 'admin@hrms.com', CURRENT_DATE, 'ACTIVE');
 
 INSERT INTO user_account (username, email, password_hash, employee_id, status)
-VALUES ('admin', 'admin@hrms.com', '$2a$10$X8xZ8K5f5Y5Y5Y5Y5Y5Y5uK5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y5Y', 1, 'ACTIVE');
+VALUES ('admin', 'admin@hrms.com', '$2a$10$luS15/XMa3lToXLo70Upp.4AIOoqxuwlCm/.zSEfGoJwzemoMkWTS', 1, 'ACTIVE');
 
 INSERT INTO user_role (user_id, role_id, assigned_on)
 VALUES (1, 1, CURRENT_DATE);
